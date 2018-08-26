@@ -1,3 +1,6 @@
+require_relative "queue.rb"
+require_relative "stack.rb"
+
 class PolyTreeNode
   attr_reader :value, :parent, :children
 
@@ -29,11 +32,35 @@ class PolyTreeNode
     end
   end
 
-  def dfs(target_value)
+# =>  uses stack or recursion. efficient memory usage.
+# =>  not optimal algorithm. narrow-long
+  def dfs(target_value, &prc)
+    raise "need a target value or a proc" if [target_value, prc].none?
+    prc ||= Proc.new { |node| node.value == target_value }
+    return nil unless self
+    return self if prc.call(self)
 
+    self.children.each do |child|
+      node = child.dfs(target_value, &prc)
+      return node if node
+    end
+    nil
   end
 
-  def bfs(target_value)
+# =>  uses queue(Queue is FIFO). inefficient memory usage.
+# =>  optimal algorithm. wide-short
+  def bfs(target_value, &prc)
+    raise "need a target value or a proc" if [target_value, prc].none?
+    prc ||= Proc.new { |node| node.value == target_value }
+    return self if prc.call(self)
 
+    nodes = Queue.new
+    self.children.each { |child| nodes.enqueue(child) }
+    until nodes.peek == nil
+      node = nodes.dequeue
+      return node if prc.call(node)
+      node.children.each { |child| nodes.enqueue(child) }
+    end
+    nil
   end
 end
